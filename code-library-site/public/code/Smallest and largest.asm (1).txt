@@ -1,0 +1,34 @@
+
+; You may customize this and other start-up templates; 
+; The location of this template is c:\emu8086\inc\0_com_template.txt
+
+org 100h
+
+
+MOV SI,2000H
+MOV CX,04H
+
+MOV AL,[SI] 
+MOV BL,[DI]
+
+INC SI
+
+NEXT: MOV DL,[SI]
+      CMP DL,AL
+      JAE CHECK_MAX
+      MOV AL,DL      
+        
+CHECK_MAX: CMP DL,BL
+           JBE CONTINUE
+           MOV BL,DL
+
+CONTINUE : INC SI
+           LOOP NEXT
+
+           HLT                                   
+
+ret
+
+
+
+
