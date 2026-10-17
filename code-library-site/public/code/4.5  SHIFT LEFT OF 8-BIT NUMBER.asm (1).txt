@@ -1,0 +1,85 @@
+.MODEL SMALL
+.STACK 100H
+.DATA
+    V1  DB 00H
+    R1  DB 00H
+
+    MSG1 DB 0DH, 0AH, 'Enter 8-bit number (2 hex): $'
+    MSG2 DB 0DH, 0AH, 'After Shift Left = $'
+.CODE
+    MOV AX, @DATA
+    MOV DS, AX
+
+    LEA DX, MSG1
+    MOV AH, 09H
+    INT 21H
+    CALL READ8
+    MOV V1, AL
+
+    MOV AL, V1
+    SHL AL, 1
+    MOV R1, AL
+
+    LEA DX, MSG2
+    MOV AH, 09H
+    INT 21H
+    MOV AL, R1
+    CALL DISP8
+
+    MOV AH, 4CH
+    INT 21H
+
+READ8 PROC
+    PUSH BX
+    PUSH CX
+    MOV CX, 2
+    XOR BX, BX
+R8L:
+    MOV AH, 01H
+    INT 21H
+    CMP AL, 39H
+    JBE R8D
+    SUB AL, 07H
+R8D:
+    SUB AL, 30H
+    SHL BX, 4
+    OR  BL, AL
+    LOOP R8L
+    MOV AX, BX
+    POP CX
+    POP BX
+    RET
+READ8 ENDP
+
+DISP8 PROC
+    PUSH AX
+    PUSH CX
+    MOV CH, AL
+    MOV CL, 4
+    SHR AL, CL
+    CALL HEXCH
+    MOV AL, CH
+    AND AL, 0FH
+    CALL HEXCH
+    POP CX
+    POP AX
+    RET
+DISP8 ENDP
+
+HEXCH PROC
+    PUSH AX
+    PUSH DX
+    AND AL, 0FH
+    CMP AL, 9
+    JBE HCHD
+    ADD AL, 07H
+HCHD:
+    ADD AL, 30H
+    MOV DL, AL
+    MOV AH, 02H
+    INT 21H
+    POP DX
+    POP AX
+    RET
+HEXCH ENDP
+END

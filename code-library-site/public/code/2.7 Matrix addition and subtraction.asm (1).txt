@@ -1,0 +1,196 @@
+ .MODEL SMALL
+.STACK 100H
+.DATA
+    N       DB 00H
+    M1      DB 64 DUP(00H)
+    M2      DB 64 DUP(00H)
+    RS      DB 64 DUP(00H)
+    RD      DB 64 DUP(00H)
+
+    MSG1    DB 0DH, 0AH, 'Enter N (1 hex digit, 1-8): $'
+    MSG2    DB 0DH, 0AH, 'Enter Matrix 1 row-wise (2 hex each): $'
+    MSG3    DB 0DH, 0AH, 'Enter Matrix 2 row-wise (2 hex each): $'
+    MSG4    DB 0DH, 0AH, 'Matrix Sum: $'
+    MSG5    DB 0DH, 0AH, 'Matrix Diff: $'
+    NL      DB 0DH, 0AH, '$'
+    SP      DB ' $'
+.CODE
+    MOV AX, @DATA
+    MOV DS, AX
+
+    LEA DX, MSG1
+    MOV AH, 09H
+    INT 21H
+    CALL READ8
+    MOV N, AL
+
+    MOV AL, N
+    MUL N
+    MOV CL, AL
+
+    LEA DX, MSG2
+    MOV AH, 09H
+    INT 21H
+    LEA SI, M1
+    MOV CH, 00H
+RM1:
+    CALL READ8
+    MOV [SI], AL
+    INC SI
+    LOOP RM1
+
+    LEA DX, MSG3
+    MOV AH, 09H
+    INT 21H
+    LEA SI, M2
+    MOV AL, N
+    MUL N
+    MOV CL, AL
+    MOV CH, 00H
+RM2:
+    CALL READ8
+    MOV [SI], AL
+    INC SI
+    LOOP RM2
+
+    LEA SI, M1
+    LEA DI, M2
+    LEA BX, RS
+    MOV AL, N
+    MUL N
+    MOV CL, AL
+    MOV CH, 00H
+MA:
+    MOV AL, [SI]
+    ADD AL, [DI]
+    MOV [BX], AL
+    INC SI
+    INC DI
+    INC BX
+    LOOP MA
+
+    LEA SI, M1
+    LEA DI, M2
+    LEA BX, RD
+    MOV AL, N
+    MUL N
+    MOV CL, AL
+    MOV CH, 00H
+MS:
+    MOV AL, [SI]
+    SUB AL, [DI]
+    MOV [BX], AL
+    INC SI
+    INC DI
+    INC BX
+    LOOP MS
+
+    LEA DX, MSG4
+    MOV AH, 09H
+    INT 21H
+    LEA DX, NL
+    MOV AH, 09H
+    INT 21H
+    LEA SI, RS
+    MOV AL, N
+    MOV CH, AL
+ROW1:
+    MOV AL, N
+    MOV CL, AL
+COL1:
+    MOV AL, [SI]
+    CALL DISP8
+    LEA DX, SP
+    MOV AH, 09H
+    INT 21H
+    INC SI
+    LOOP COL1
+    LEA DX, NL
+    MOV AH, 09H
+    INT 21H
+    DEC CH
+    JNZ ROW1
+
+    LEA DX, MSG5
+    MOV AH, 09H
+    INT 21H
+    LEA DX, NL
+    MOV AH, 09H
+    INT 21H
+    LEA SI, RD
+    MOV AL, N
+    MOV CH, AL
+ROW2:
+    MOV AL, N
+    MOV CL, AL
+COL2:
+    MOV AL, [SI]
+    CALL DISP8
+    LEA DX, SP
+    MOV AH, 09H
+    INT 21H
+    INC SI
+    LOOP COL2
+    LEA DX, NL
+    MOV AH, 09H
+    INT 21H
+    DEC CH
+    JNZ ROW2
+
+    MOV AH, 4CH
+    INT 21H
+
+READ8 PROC
+    PUSH BX
+    PUSH CX
+    MOV CX, 2
+    XOR BX, BX
+R8L:
+    MOV AH, 01H
+    INT 21H
+    CMP AL, 39H
+    JBE R8D
+    SUB AL, 07H
+R8D:
+    SUB AL, 30H
+    SHL BX, 4
+    OR  BL, AL
+    LOOP R8L
+    MOV AX, BX
+    POP CX
+    POP BX
+    RET
+READ8 ENDP
+
+DISP8 PROC
+    PUSH AX
+    PUSH CX
+    MOV CH, AL
+    MOV CL, 4
+    SHR AL, CL
+    CALL HEXCH
+    MOV AL, CH
+    AND AL, 0FH
+    CALL HEXCH
+    POP CX
+    POP AX
+    RET
+DISP8 ENDP
+
+HEXCH PROC
+    PUSH AX
+    PUSH DX
+    AND AL, 0FH
+    CMP AL, 9
+    JBE HCHD
+    ADD AL, 07H
+HCHD:
+    ADD AL, 30H
+    MOV DL, AL
+    MOV AH, 02H
+    INT 21H
+    POP DX
+    POP AX
+    RET
+HEXCH ENDP
+END

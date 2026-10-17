@@ -1,0 +1,122 @@
+.MODEL SMALL
+.STACK 100H
+.DATA
+    A   DB 00H
+    B   DB 00H
+    C   DB 00H
+    D   DB 00H
+    R1  DW 0000H
+    R2  DW 0000H
+    R3  DW 0000H
+
+    MSG1 DB 0DH, 0AH, 'Enter A (2 hex): $'
+    MSG2 DB 0DH, 0AH, 'Enter B (2 hex): $'
+    MSG3 DB 0DH, 0AH, 'Enter C (2 hex): $'
+    MSG4 DB 0DH, 0AH, 'Enter D (2 hex): $'
+    MSG5 DB 0DH, 0AH, '(a*b)+(c*d) = $'
+.CODE
+    MOV AX, @DATA
+    MOV DS, AX
+
+    LEA DX, MSG1
+    MOV AH, 09H
+    INT 21H
+    CALL READ8
+    MOV A, AL
+
+    LEA DX, MSG2
+    MOV AH, 09H
+    INT 21H
+    CALL READ8
+    MOV B, AL
+
+    LEA DX, MSG3
+    MOV AH, 09H
+    INT 21H
+    CALL READ8
+    MOV C, AL
+
+    LEA DX, MSG4
+    MOV AH, 09H
+    INT 21H
+    CALL READ8
+    MOV D, AL
+
+    MOV AL, A
+    MUL B
+    MOV R1, AX
+
+    MOV AL, C
+    MUL D
+    MOV R2, AX
+
+    MOV AX, R1
+    ADD AX, R2
+    MOV R3, AX
+
+    LEA DX, MSG5
+    MOV AH, 09H
+    INT 21H
+    MOV AX, R3
+    CALL DISP16
+
+    MOV AH, 4CH
+    INT 21H
+
+READ8 PROC
+    PUSH BX
+    PUSH CX
+    MOV CX, 2
+    XOR BX, BX
+R8L:
+    MOV AH, 01H
+    INT 21H
+    CMP AL, 39H
+    JBE R8D
+    SUB AL, 07H
+R8D:
+    SUB AL, 30H
+    SHL BX, 4
+    OR  BL, AL
+    LOOP R8L
+    MOV AX, BX
+    POP CX
+    POP BX
+    RET
+READ8 ENDP
+
+DISP16 PROC
+    PUSH AX
+    PUSH BX
+    PUSH CX
+    MOV BX, AX
+    MOV CX, 4
+D16L:
+    ROL BX, 4
+    MOV AL, BL
+    AND AL, 0FH
+    CALL HEXCH
+    LOOP D16L
+    POP CX
+    POP BX
+    POP AX
+    RET
+DISP16 ENDP
+
+HEXCH PROC
+    PUSH AX
+    PUSH DX
+    AND AL, 0FH
+    CMP AL, 9
+    JBE HCHD
+    ADD AL, 07H
+HCHD:
+    ADD AL, 30H
+    MOV DL, AL
+    MOV AH, 02H
+    INT 21H
+    POP DX
+    POP AX
+    RET
+HEXCH ENDP
+END

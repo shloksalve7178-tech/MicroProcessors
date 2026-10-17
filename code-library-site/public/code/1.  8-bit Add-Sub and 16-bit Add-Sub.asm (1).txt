@@ -1,0 +1,181 @@
+.MODEL SMALL
+.STACK 100H
+.DATA
+    VAR1  DB 00H
+    VAR2  DB 00H
+    RES1  DB 00H
+    RES2  DB 00H
+    VAR3  DW 0000H
+    VAR4  DW 0000H
+    RES3  DW 0000H
+    RES4  DW 0000H
+
+    MSG1  DB 0DH, 0AH, 'Enter 8-bit VAR1 (2 hex digits): $'
+    MSG2  DB 0DH, 0AH, 'Enter 8-bit VAR2 (2 hex digits): $'
+    MSG3  DB 0DH, 0AH, '8-bit Sum = $'
+    MSG4  DB 0DH, 0AH, '8-bit Diff = $'
+    MSG5  DB 0DH, 0AH, 'Enter 16-bit VAR3 (4 hex digits): $'
+    MSG6  DB 0DH, 0AH, 'Enter 16-bit VAR4 (4 hex digits): $'
+    MSG7  DB 0DH, 0AH, '16-bit Sum = $'
+    MSG8  DB 0DH, 0AH, '16-bit Diff = $'
+.CODE
+    MOV AX, @DATA
+    MOV DS, AX
+
+    LEA DX, MSG1
+    MOV AH, 09H
+    INT 21H
+    CALL READ8
+    MOV VAR1, AL
+
+    LEA DX, MSG2
+    MOV AH, 09H
+    INT 21H
+    CALL READ8
+    MOV VAR2, AL
+
+    MOV AL, VAR1
+    ADD AL, VAR2
+    MOV RES1, AL
+    LEA DX, MSG3
+    MOV AH, 09H
+    INT 21H
+    MOV AL, RES1
+    CALL DISP8
+
+    MOV AL, VAR1
+    SUB AL, VAR2
+    MOV RES2, AL
+    LEA DX, MSG4
+    MOV AH, 09H
+    INT 21H
+    MOV AL, RES2
+    CALL DISP8
+
+    LEA DX, MSG5
+    MOV AH, 09H
+    INT 21H
+    CALL READ16
+    MOV VAR3, AX
+
+    LEA DX, MSG6
+    MOV AH, 09H
+    INT 21H
+    CALL READ16
+    MOV VAR4, AX
+
+    MOV AX, VAR3
+    ADD AX, VAR4
+    MOV RES3, AX
+    LEA DX, MSG7
+    MOV AH, 09H
+    INT 21H
+    MOV AX, RES3
+    CALL DISP16
+
+    MOV AX, VAR3
+    SUB AX, VAR4
+    MOV RES4, AX
+    LEA DX, MSG8
+    MOV AH, 09H
+    INT 21H
+    MOV AX, RES4
+    CALL DISP16
+
+    MOV AH, 4CH
+    INT 21H
+
+READ8 PROC
+    PUSH BX
+    PUSH CX
+    MOV CX, 2
+    XOR BX, BX
+R8L:
+    MOV AH, 01H
+    INT 21H
+    CMP AL, 39H
+    JBE R8D
+    SUB AL, 07H
+R8D:
+    SUB AL, 30H
+    SHL BX, 4
+    OR  BL, AL
+    LOOP R8L
+    MOV AX, BX
+    POP CX
+    POP BX
+    RET
+READ8 ENDP
+
+READ16 PROC
+    PUSH BX
+    PUSH CX
+    MOV CX, 4
+    XOR BX, BX
+R16L:
+    MOV AH, 01H
+    INT 21H
+    CMP AL, 39H
+    JBE R16D
+    SUB AL, 07H
+R16D:
+    SUB AL, 30H
+    SHL BX, 4
+    OR  BL, AL
+    LOOP R16L
+    MOV AX, BX
+    POP CX
+    POP BX
+    RET
+READ16 ENDP
+
+DISP8 PROC
+    PUSH AX
+    PUSH CX
+    MOV CH, AL
+    MOV CL, 4
+    SHR AL, CL
+    CALL HEXCH
+    MOV AL, CH
+    AND AL, 0FH
+    CALL HEXCH
+    POP CX
+    POP AX
+    RET
+DISP8 ENDP
+
+DISP16 PROC
+    PUSH AX
+    PUSH BX
+    PUSH CX
+    MOV BX, AX
+    MOV CX, 4
+D16L:
+    ROL BX, 4
+    MOV AL, BL
+    AND AL, 0FH
+    CALL HEXCH
+    LOOP D16L
+    POP CX
+    POP BX
+    POP AX
+    RET
+DISP16 ENDP
+
+HEXCH PROC
+    PUSH AX
+    PUSH DX
+    AND AL, 0FH
+    CMP AL, 9
+    JBE HCHD
+    ADD AL, 07H
+HCHD:
+    ADD AL, 30H
+    MOV DL, AL
+    MOV AH, 02H
+    INT 21H
+    POP DX
+    POP AX
+    RET
+HEXCH ENDP
+END

@@ -1,0 +1,146 @@
+.MODEL SMALL
+.STACK 100H
+.DATA
+    N   EQU 04H
+    V1  DB 00H, 00H, 00H, 00H
+    V2  DB 00H, 00H, 00H, 00H
+    R1  DB 00H, 00H, 00H, 00H
+    R2  DB 00H, 00H, 00H, 00H
+
+    MSG1 DB 0DH, 0AH, 'Enter VAR1 (4 bytes, 8 hex digits): $'
+    MSG2 DB 0DH, 0AH, 'Enter VAR2 (4 bytes, 8 hex digits): $'
+    MSG3 DB 0DH, 0AH, 'Sum  = $'
+    MSG4 DB 0DH, 0AH, 'Diff = $'
+.CODE
+    MOV AX, @DATA
+    MOV DS, AX
+
+    LEA DX, MSG1
+    MOV AH, 09H
+    INT 21H
+    LEA SI, V1
+    MOV CX, N
+R1L:
+    CALL READ8
+    MOV [SI], AL
+    INC SI
+    LOOP R1L
+
+    LEA DX, MSG2
+    MOV AH, 09H
+    INT 21H
+    LEA SI, V2
+    MOV CX, N
+R2L:
+    CALL READ8
+    MOV [SI], AL
+    INC SI
+    LOOP R2L
+
+    LEA SI, V1+3
+    LEA DI, V2+3
+    LEA BX, R1+3
+    MOV CX, N
+    CLC
+A1:
+    MOV AL, [SI]
+    ADC AL, [DI]
+    MOV [BX], AL
+    DEC SI
+    DEC DI
+    DEC BX
+    LOOP A1
+
+    LEA DX, MSG3
+    MOV AH, 09H
+    INT 21H
+    LEA SI, R1
+    MOV CX, N
+D1L:
+    MOV AL, [SI]
+    CALL DISP8
+    INC SI
+    LOOP D1L
+
+    LEA SI, V1+3
+    LEA DI, V2+3
+    LEA BX, R2+3
+    MOV CX, N
+    CLC
+S1:
+    MOV AL, [SI]
+    SBB AL, [DI]
+    MOV [BX], AL
+    DEC SI
+    DEC DI
+    DEC BX
+    LOOP S1
+
+    LEA DX, MSG4
+    MOV AH, 09H
+    INT 21H
+    LEA SI, R2
+    MOV CX, N
+D2L:
+    MOV AL, [SI]
+    CALL DISP8
+    INC SI
+    LOOP D2L
+
+    MOV AH, 4CH
+    INT 21H
+
+READ8 PROC
+    PUSH BX
+    PUSH CX
+    MOV CX, 2
+    XOR BX, BX
+R8L:
+    MOV AH, 01H
+    INT 21H
+    CMP AL, 39H
+    JBE R8D
+    SUB AL, 07H
+R8D:
+    SUB AL, 30H
+    SHL BX, 4
+    OR  BL, AL
+    LOOP R8L
+    MOV AX, BX
+    POP CX
+    POP BX
+    RET
+READ8 ENDP
+
+DISP8 PROC
+    PUSH AX
+    PUSH CX
+    MOV CH, AL
+    MOV CL, 4
+    SHR AL, CL
+    CALL HEXCH
+    MOV AL, CH
+    AND AL, 0FH
+    CALL HEXCH
+    POP CX
+    POP AX
+    RET
+DISP8 ENDP
+
+HEXCH PROC
+    PUSH AX
+    PUSH DX
+    AND AL, 0FH
+    CMP AL, 9
+    JBE HCHD
+    ADD AL, 07H
+HCHD:
+    ADD AL, 30H
+    MOV DL, AL
+    MOV AH, 02H
+    INT 21H
+    POP DX
+    POP AX
+    RET
+HEXCH ENDP
+END

@@ -1,0 +1,31 @@
+
+; You may customize this and other start-up templates; 
+; The location of this template is c:\emu8086\inc\0_com_template.txt
+
+org 100h
+
+MOV SI,2000h
+MOV CX,05H
+
+PASS: MOV SI,2000H
+      MOV BX,CX
+
+NEXT: MOV AL,[SI]
+      MOV DL,[SI+1]
+      CMP AL,DL
+      JBE NOSWAP
+      
+      MOV [SI],DL
+      MOV [SI+1],AL
+      
+NOSWAP: INC SI
+        DEC BX
+        JNZ NEXT
+        LOOP PASS
+HLT                    
+
+ret
+
+
+
+
