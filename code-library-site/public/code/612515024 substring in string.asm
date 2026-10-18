@@ -1,0 +1,69 @@
+org 100h
+.model small
+.stack 100h
+.data
+str1 DB 50 DUP(?)
+str2 DB 50 DUP(?)
+len1 DW ?
+len2 DW ?
+found DB ?
+.code
+MOV AX, @DATA
+MOV DS, AX
+MOV ES, AX
+
+LEA SI, str1
+MOV CX, 0000H
+R1:
+MOV AH, 01H
+INT 21H
+CMP AL, 0DH
+JE E1
+MOV [SI], AL
+INC SI
+INC CX
+JMP R1
+E1:
+MOV len1, CX
+
+LEA SI, str2
+MOV CX, 0000H
+R2:
+MOV AH, 01H
+INT 21H
+CMP AL, 0DH
+JE E2
+MOV [SI], AL
+INC SI
+INC CX
+JMP R2
+E2:
+MOV len2, CX
+
+MOV found, 00H
+MOV AX, len1
+SUB AX, len2
+JB FIN
+MOV CX, AX
+INC CX
+LEA SI, str1
+SLOOP:
+PUSH CX
+PUSH SI
+LEA DI, str2
+MOV CX, len2
+CLD
+REPE CMPSB
+JE MATCH
+POP SI
+POP CX
+INC SI
+LOOP SLOOP
+JMP FIN
+MATCH:
+POP SI
+POP CX
+MOV found, 01H
+FIN:
+
+ret

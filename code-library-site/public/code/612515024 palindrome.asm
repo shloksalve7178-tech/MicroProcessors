@@ -1,0 +1,47 @@
+org 100h
+.model small
+.stack 100h
+.data
+str1 DB 50 DUP(?)
+len DW ?
+palin DB ?
+.code
+MOV AX, @DATA
+MOV DS, AX
+
+LEA SI, str1
+MOV CX, 0000H
+R1:
+MOV AH, 01H
+INT 21H
+CMP AL, 0DH
+JE E1
+MOV [SI], AL
+INC SI
+INC CX
+JMP R1
+E1:
+MOV len, CX
+
+MOV palin, 01H
+MOV CX, len
+CMP CX, 0000H
+JE FIN
+SHR CX, 01H
+LEA SI, str1
+MOV DI, SI
+ADD DI, len
+DEC DI
+PLOOP:
+MOV AL, [SI]
+CMP AL, [DI]
+JNE NOPAL
+INC SI
+DEC DI
+LOOP PLOOP
+JMP FIN
+NOPAL:
+MOV palin, 00H
+FIN:
+
+ret
